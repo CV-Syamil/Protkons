@@ -1,0 +1,32 @@
+<?php
+
+class Root
+{
+    function __construct(){
+    }
+    function check_access()
+    {
+        $CI = & get_instance();
+        // if($CI->router->fetch_class()!='informasi' && !$this->is_private()){
+        //     die('403');
+        // }
+    }
+    function is_private(){
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            $ip = $_SERVER['HTTP_CLIENT_IP'];
+        } elseif (!empty($_SERVER['X-Real-IP'])) {
+            $ip = $_SERVER['X-Real-IP'];
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        } else {
+            $ip = $_SERVER['REMOTE_ADDR'];
+        }
+        $ip = ip2long($ip);
+        $net_a = ip2long('10.255.255.255') >> 24;
+        $net_b = ip2long('172.31.255.255') >> 20;
+        $net_c = ip2long('192.168.255.255') >> 16;
+        return $ip >> 24 === $net_a || $ip >> 20 === $net_b || $ip >> 16 === $net_c;
+    }
+
+
+}

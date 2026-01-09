@@ -1,0 +1,7 @@
+add table fungsi { id[bigInt][AI], nama[varchar(200)], created_at[timestamp], updated_at[timestamp] }
+
+add field fungsi[bigInt][nullable] in table master_pelayanan
+
+add field fungsi[bigInt][nullable] in table user
+
+add field fungsi[bigInt][nullable] in table tr_pelayanan

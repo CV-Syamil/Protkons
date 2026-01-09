@@ -1,0 +1,90 @@
+
+<link rel="stylesheet" href="<?=base_url('style/lte')?>/plugins/daterangepicker/daterangepicker.css">
+<script src="<?=base_url('style/lte')?>/plugins/moment/moment.min.js"></script>
+<script src="<?=base_url('style/lte')?>/plugins/daterangepicker/daterangepicker.js"></script>
+
+<div class="card">
+    <div class="card-header"><h4 class="card-title">Laporan Pelapor</h4></div>
+    <div class="card-body">
+        <form action="<?=site_url('laporan/per-pelayanan/export')?>" id="form_laporan" target="_blank" method="POST">
+            <div class="row">
+                <div class="col-md-6"></div>
+            </div>
+            <div class="form-group">
+                <label>Tanggal</label>
+                <input type="text" class="form-control date_range_filter">
+                <input type="hidden" name="tgl_s" id="tgl_s">
+                <input type="hidden" name="tgl_e" id="tgl_e">
+            </div>
+            <div class="form-group text-right">
+                <button class="btn btn-primary" type="submit" id="btn_export"><i class="fas fa-file-excel"></i>&nbsp;&nbsp;&nbsp;Export</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    $(document).ready(()=>{
+        var tgl_s = moment().startOf('month');
+        var tgl_e = moment().endOf('month');
+        var tw1 = [moment('<?=date('Y')?>-01-01').startOf('month'),moment('<?=date('Y')?>-03-01').endOf('month')];
+        var tw2 = [moment('<?=date('Y')?>-04-01').startOf('month'),moment('<?=date('Y')?>-06-01').endOf('month')];
+        var tw3 = [moment('<?=date('Y')?>-07-01').startOf('month'),moment('<?=date('Y')?>-09-01').endOf('month')];
+        var tw4 = [moment('<?=date('Y')?>-10-01').startOf('month'),moment('<?=date('Y')?>-12-01').endOf('month')];
+        $('#slc_pl').select2({
+			theme: 'bootstrap4',
+			placeholder: "Pilih Pelayanan",
+			allowClear: false,
+			width: '100%',
+			ajax: { url: '<?=site_url('api/get-layanan')?>', type:'POST',dataType: 'json', data: function(p){return {s:p.term};}, }
+		}).on('change', function(){ list_fields(this.value); });
+        $('.date_range_filter').daterangepicker({
+            ranges   : {
+                '7 Hari Terakhir' : [moment().subtract(6, 'days'), moment()],
+                'Triwulan I (<?=date('Y')?>)' : tw1,
+                'Triwulan II (<?=date('Y')?>)' : tw2,
+                'Triwulan III (<?=date('Y')?>)' : tw3,
+                'Triwulan IV (<?=date('Y')?>)' : tw4,
+                'Bulan ini'  : [moment().startOf('month'), moment().endOf('month')],
+                'Bulan sebelumnya'  : [moment().subtract(1,'month').startOf('month'), moment().subtract(1,'month').endOf('month')],
+            },
+            startDate: tgl_s,
+            endDate  : tgl_e,
+            locale: {format: 'DD MMMM YYYY',}
+        },setTglx);
+        setTglx(tgl_s,tgl_e);
+    });
+    function setTglx(s,e){
+        $('#tgl_s').val(s.format('YYYY-MM-DD'));
+        $('#tgl_e').val(e.format('YYYY-MM-DD'));
+    }
+    var ajax_fields;
+    var kodeX;
+    var jsTreeX = $('#list_field').jstree({ 
+        core : { 
+            themes: { variant: 'large' },
+            data : []
+        }, plugins : [ "wholerow", "checkbox" ]
+    }).on('changed.jstree', function(e,data){
+        $('#field_list').val(data.selected.join('|'));
+        if(kodeX){ localStorage.setItem(kodeX,data.selected.join(',')); }
+        $('#spinner_fa').hide('fade');
+    });
+    function list_fields(kode){
+        kodeX = 'Nodes_'+kode;
+        $('#field_list').val('');
+        if(ajax_fields){ ajax_fields.abort(); }
+        ajax_fields = $.ajax({
+            url: '<?=site_url('api/get-field-pelayanan')?>/'+kode, type: 'GET', dataType: 'JSON',
+            error: ()=>{ toast('error',e.status+': '+e.statusText);$('#spinner_fa').hide('fade') },
+            beforeSend:()=>$('#spinner_fa').show('fade'),
+            success:(r)=>{
+                jsTreeX.jstree().settings.core.data = r;
+                jsTreeX.jstree().refresh(false, function(s){
+                    var slc_node = localStorage.getItem(kodeX);
+                    if(slc_node){ s.core.selected = slc_node.toString().split(','); }
+                    return s;
+                });
+            }
+        });
+    }
+</script>
